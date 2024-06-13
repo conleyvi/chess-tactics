@@ -497,26 +497,32 @@ function parsePGN(PGNData) {
 
 	games.forEach(
 		(game) => {
-			const { tags } = PgnParser.parse(game.tags, { startRule: 'tags' });
-			const { moves } = PgnParser.parse(game.pgn, { startRule: 'game' });
+			try {
+				const { tags } = PgnParser.parse(game.tags, { startRule: 'tags' });
+				const { moves } = PgnParser.parse(game.pgn, { startRule: 'game' });
 
-			// Set the options checkboxes if any of the special tags have a value of 1
-			if (tags.PGNTrainerBothSides === '1') { $("#playbothsides").prop("checked", true); }
-			if (tags.PGNTrainerOppositeSide === '1') { $("#playoppositeside").prop("checked", true); }
-			if (tags.PGNTrainerRandomize === '1') { $("#randomizeSet").prop("checked", true); }
-			if (tags.PGNTrainerFlipped === '1') { $("#flipped").prop("checked", true); }
-			if (tags.PGNTrainerAnalysisLink === '1') { $("#analysisboard").prop("checked", true); }
+				// Set the options checkboxes if any of the special tags have a value of 1
+				if (tags.PGNTrainerBothSides === '1') { $("#playbothsides").prop("checked", true); }
+				if (tags.PGNTrainerOppositeSide === '1') { $("#playoppositeside").prop("checked", true); }
+				if (tags.PGNTrainerRandomize === '1') { $("#randomizeSet").prop("checked", true); }
+				if (tags.PGNTrainerFlipped === '1') { $("#flipped").prop("checked", true); }
+				if (tags.PGNTrainerAnalysisLink === '1') { $("#analysisboard").prop("checked", true); }
 
-			// Make sure that both "Play both sides" and "Play opposite side" are not selected (if yes, clear both)
-			confirmOnlyOneOption();
+				// Make sure that both "Play both sides" and "Play opposite side" are not selected (if yes, clear both)
+				confirmOnlyOneOption();
 
-			const puzzle = {};
-			puzzle.Event = (tags.Event);
-			puzzle.FEN = (tags.FEN);
-			puzzle.PGN = (game.pgn);
-			puzzle.Moves = moves;
+				const puzzle = {};
+				puzzle.Event = (tags.Event);
+				puzzle.FEN = (tags.FEN);
+				puzzle.PGN = (game.pgn);
+				puzzle.Moves = moves;
 
-			puzzleset.push(puzzle);
+				puzzleset.push(puzzle);
+			}
+			catch(error)
+			{
+				console.error(error);
+			}
 		},
 	);
 }
