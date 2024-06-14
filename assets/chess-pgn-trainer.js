@@ -347,6 +347,8 @@ function loadPGNFile() {
 	const [file] = document.getElementById('openPGN').files;
 	const reader = new FileReader();
 
+	// TODO If we are mid-set, change 'Start' to 'Continue'
+
 	resetGame();
 
 	reader.addEventListener(
