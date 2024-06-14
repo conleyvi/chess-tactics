@@ -148,27 +148,6 @@ function checkAndPlayNext() {
 }
 
 /**
- * Countdown timer function
- */ 
-function startTimer(duration, display) {
-	let timer = duration;
-	setInterval(function () {
-	  let minutes = Math.floor(timer / 60);
-	  let seconds = timer % 60;
-	  let milliseconds = (timer % 1) * 10; // Get tenths of a second
-  
-	  minutes = minutes < 10 ? "0" + minutes : minutes;
-	  seconds = seconds < 10 ? "0" + seconds : seconds;
-  
-	  display.textContent = minutes + ":" + seconds + ":" + milliseconds;
-  
-	  if (--timer < 0) {
-		timer = 0; // Stop the timer when it reaches 0
-	  }
-	}, 100); // Update timer every 100 milliseconds (0.1 seconds)
-  }
-
-/**
  * Clear all the on-screen messages
  */
 function clearMessages() {
