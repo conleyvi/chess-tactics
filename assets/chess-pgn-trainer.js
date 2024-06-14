@@ -35,6 +35,7 @@ let puzzlecomplete = false;
 let pauseflag = false;
 let increment = 0;
 let PuzzleOrder = [];
+let singleAttempt = false;
 
 // Promotion variables
 let promoteTo;
@@ -54,7 +55,7 @@ let pauseDateTimeTotal = 0;
 $('#versionnumber').text(`version ${version}`);
 
 // Collection of checkboxes used in the app
-let checkboxlist = ['#playbothsides', '#playoppositeside', '#randomizeSet', '#flipped', '#analysisboard'];
+let checkboxlist = ['#playbothsides', '#playoppositeside', '#randomizeSet', '#singleAttempt', '#flipped', '#analysisboard'];
 
 // Collection of text elements
 let messagelist = ['#messagecomplete', '#puzzlename_landscape', '#puzzlename_portrait', '#errors', '#errorRate', '#elapsedTime', '#avgTime'];
@@ -101,15 +102,18 @@ function checkAndPlayNext() {
 		}
 		error = true;
 
-		// Undo that move from the game
-		game.undo();
+		if(!singleAttempt) {
 
-		// Snap the bad piece back
-		return 'snapback';
+			// Undo that move from the game
+			game.undo();
+
+			// Snap the bad piece back
+			return 'snapback';
+		}
 	}
 
 	// Check if all the expected moves have been played
-	if (game.history().length === moveHistory.length) {
+	if (game.history().length === moveHistory.length || (error && singleAttempt)) {
 		puzzlecomplete = true;
 
 		// Check to see if this is the last puzzle
@@ -820,6 +824,11 @@ function startTest() {
 		{ length: (stop - start) / step + 1 },
 		(value, index) => start + index * step,
 	);
+
+	// Set single-attempt flag
+	if ($('#singleAttempt').is(':checked')) {
+		singleAttempt = true;
+	}
 
 	// Shuffle the set if the box is checked
 	if ($('#randomizeSet').is(':checked')) {
