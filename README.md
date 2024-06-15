@@ -142,7 +142,8 @@ If you just want to use the trainer and and not bother hosting the page yourself
 
 If you want to host a copy on your own environment and/or make changes:
 1. Download & extract the zip into a folder and start a web server from there.
-2. In a browser, point to ```index.html```.  On my own setup, the URL is ```localhost:8000/index.html``` but may be different for your setup.  Refer to your web server for details.
+2. On MacOS, open a terminal, navigate to the folder holding index.html and run ```python3 -m http.server 80```
+3. In a browser, navigate to ```localhost/index.html```
 
 ## Usage
 1. Click on "Open PGN File"
