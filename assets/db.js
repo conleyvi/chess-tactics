@@ -46,7 +46,7 @@ function selectSet(pgnFileName)
     if(contents == '') {
 
         // Initial file will only have headers
-        contents = 'Header1,Header2';
+        contents = 'total,completed';
         fs.writeFileSync(csvFileName, contents);
     }
 
@@ -55,7 +55,27 @@ function selectSet(pgnFileName)
         header: true,
         dynamicTyping: true
     });
+    console.log(JSON.stringify(csv.data));
     console.log(JSON.stringify(csv.meta));
+    console.log(csv.data.length);
+
+    // If we don't have a set in progress, start one
+    if(csv.data.length == 0 || csv.data[csv.data.length -1 ].completed ==  csv.data[csv.data.length -1 ].total) {
+        startSet(pgnFileName, csv, csv.data.length + 1);
+    }
+
+}
+
+/**
+ * 
+ * Create a CSV for this set; each line represents a different puzzle
+ * 
+ * @param {*} pgnFileName 
+ * @param {*} csv 
+ * @param {*} count 
+ */
+function startSet(pgnFileName, csv, count) {
+    console.log(`Starting set ${count} for ${pgnFileName}`);
 }
 
 /**

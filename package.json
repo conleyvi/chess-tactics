@@ -4,7 +4,8 @@
     "express": "^4.19.2",
     "fs": "^0.0.1-security",
     "papaparse": "^5.4.1",
-    "path": "^0.12.7"
+    "path": "^0.12.7",
+    "xxhash": "^0.3.0"
   },
   "name": "chess-pgn-trainer",
   "version": "1.0.0",
