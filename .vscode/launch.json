@@ -11,7 +11,7 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}/assets/utility.js"
+            "program": "${workspaceFolder}/assets/db.js"
         }
     ]
 }
