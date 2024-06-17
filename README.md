@@ -143,7 +143,9 @@ If you just want to use the trainer and and not bother hosting the page yourself
 If you want to host a copy on your own environment and/or make changes:
 1. Download & extract the zip into a folder and start a web server from there.
 2. On MacOS, open a terminal, navigate to the folder holding index.html and run ```python3 -m http.server 80```
-3. In a browser, navigate to ```localhost/index.html```
+3. Make sure node and npm are installed
+4. Run ```npm install fs express body-parser```
+5. In a browser, navigate to ```localhost/index.html```
 
 ## Usage
 1. Click on "Open PGN File"
