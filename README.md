@@ -144,7 +144,7 @@ If you want to host a copy on your own environment and/or make changes:
 1. Download & extract the zip into a folder and start a web server from there.
 2. On MacOS, open a terminal, navigate to the folder holding index.html and run ```python3 -m http.server 80```
 3. Make sure node and npm are installed
-4. Run ```npm install fs express body-parser```
+4. Run ```npm install fs express body-parser path```
 5. In a browser, navigate to ```localhost/index.html```
 
 ## Usage
