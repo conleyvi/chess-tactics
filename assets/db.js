@@ -42,28 +42,28 @@ function selectSet(pgnFileName)
     var csvFileName = 'csv/' + removeFileExtension(pgnFileName) + '.csv';
     var contents = getFileContents(csvFileName);
     
-    if(contents != '') {  // If we have, return the current 'open' set.
+    // If we don't have a file for this set, create it
+    if(contents == '') {
 
-        // First, parse CSV
-        var csv = Papa.parse(contents, {
-            header: true,
-            dynamicTyping: true
-        });
-        console.log(JSON.stringify(csv.meta));
-    } else { // If not, create it
         // Initial file will only have headers
-        var csv = 'Header1,Header2';
-        fs.writeFileSync(csvFileName, csv);
-
+        contents = 'Header1,Header2';
+        fs.writeFileSync(csvFileName, contents);
     }
 
-
-
-
-
+    // First, parse CSV
+    var csv = Papa.parse(contents, {
+        header: true,
+        dynamicTyping: true
+    });
+    console.log(JSON.stringify(csv.meta));
 }
 
-function update(callback)
+/**
+ * 
+ * @param {*} puzzle Map of the puzzle we want to turn into a line in the CSV
+ * @param {*} callback 
+ */
+function update(puzzle, callback)
 {
     // Write the updated CSV for the current set
 
