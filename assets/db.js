@@ -1,4 +1,5 @@
 const fs = require('fs');
+const Papa = require('papaparse');
 
 function getFileContents(filePath) {
     try {
@@ -38,13 +39,24 @@ function selectSet(pgnFileName)
     console.log(`Selecting set ${pgnFileName}`);
 
     // Check if we've already created a table for this PGN
-    var contents = getFileContents('csv/' + removeFileExtension(pgnFileName));
+    var csvFileName = 'csv/' + removeFileExtension(pgnFileName) + '.csv';
+    var contents = getFileContents(csvFileName);
+    
+    if(contents != '') {  // If we have, return the current 'open' set.
 
-    // If we have, return the current set 'open' set.
+        // First, parse CSV
+        var csv = Papa.parse(contents, {
+            header: true,
+            dynamicTyping: true
+        });
+        console.log(JSON.stringify(csv.meta));
+    } else { // If not, create it
+        // Initial file will only have headers
+        var csv = 'Header1,Header2';
+        fs.writeFileSync(csvFileName, csv);
 
-    // If not, create it
+    }
 
-    // Initial file will only have headers
 
 
 

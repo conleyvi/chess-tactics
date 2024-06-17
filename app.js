@@ -13,7 +13,7 @@ const port = 80;
 app.use(bodyParser.json());
 
 // Endpoint to handle POST requests to /finishPuzzle
-app.post('/finishPuzzle', (req, res) => {
+app.post('/app/finishPuzzle', (req, res) => {
     const puzzleData = req.body;
     console.log('Received puzzle data:', puzzleData);
     // Add your processing logic here
