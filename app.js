@@ -1,6 +1,5 @@
 const express = require('express');
-const bodyParser = require('body-parser');
-const fs = require('fs');
+const compression = require('compression');
 const path = require('path'); 
 
 // Require the utils.js file
@@ -9,18 +8,35 @@ const { selectSet } = require('./assets/db');
 const app = express();
 const port = 80;
 
-// Middleware to parse JSON request body
-app.use(bodyParser.json());
+// Middleware to handle gzip compression
+app.use(compression());
+
+// Handle up to 50 megs of JSON
+app.use(express.json({limit: '50mb'}));
 
 // Endpoint to handle POST requests to /finishPuzzle
 app.post('/app/finishPuzzle', (req, res) => {
     const puzzleData = req.body;
+
     console.log('Received puzzle data:', puzzleData);
     // Add your processing logic here
     // For demonstration, just sending back a response
     res.json({ message: 'Puzzle finished successfully', data: puzzleData });
 
-    selectSet(puzzleData.pgn);
+});
+
+// Endpoint to handle POST requests to /selectSet
+app.post('/app/selectSet', (req, res) => {
+    const puzzleData = req.body;
+    console.log('Received puzzle data:', puzzleData);
+    // Calculate the size of the request body in bytes
+    const contentLength = parseInt(req.get('Content-Length'), 10);
+    console.log(`Received ${contentLength} bytes of data`);
+    // Add your processing logic here
+    // For demonstration, just sending back a response
+    res.json({ message: 'Puzzle finished successfully', data: puzzleData });
+
+    //selectSet(puzzleData.pgn);
 });
 
 // Serve static files from the root directory

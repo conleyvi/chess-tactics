@@ -57,7 +57,7 @@ function shuffleArray(arr) {
 // One CSV per PGN+attempt that stores results for each individual puzzle
 // If you have 8 attempts at 1 PGN you'll end up with 9 total CSV files
 
-function selectSet(pgnFileName)
+function selectSet(pgnFileName, pgnData)
 {
     console.log(`Selecting set ${pgnFileName}`);
 
@@ -84,13 +84,22 @@ function selectSet(pgnFileName)
 
     // If we don't have a set in progress, start one
     if(csv.data.length == 0 || csv.data[csv.data.length -1 ].completed ==  csv.data[csv.data.length -1 ].total) {
-        let gameCount = startSet(pgnFileName, undefined, csv, csv.data.length + 1, true);
-        console.log(`Started set with ${gameCount} games`);
+        let setNumber = csv.data.length + 1;
+        let gameCount = startSet(pgnFileName, undefined, csv, setNumber, true);
+        console.log(`Started set ${setNumber} with ${gameCount} games`);
         let template = `\n{set},{total},0`;
-        contents += template.replace('{set}', csv.data.length + 1).replace('{total}', gameCount);
+        contents += template.replace('{set}', setNumber).replace('{total}', gameCount);
         FS.writeFileSync(csvFileName, contents);
-    }
 
+        csv = Papa.parse(contents, {
+            header: true,
+            dynamicTyping: true
+        });
+        console.log(JSON.stringify(csv.data));
+        console.log(JSON.stringify(csv.meta));
+        console.log(csv.data.length);
+    }
+    return csv.data[csv.data.length - 1];
 }
 
 /**
@@ -113,7 +122,7 @@ function startSet(pgnFileName, games, csv, count, randomize) {
     }
 
     console.log(`Starting set ${count} for ${games.length} games in ${pgnFileName}`);
-    
+
     // Create an array with values from 1 to n
     let shuffled = [];
     for (let i = 1; i <= games.length; i++) {
@@ -157,8 +166,44 @@ function update(puzzle, callback)
 
 }
 
-// Export the function so it can be imported in other modules
-module.exports = { selectSet };
+function replaceLineInFile(filePath, lineIndexToReplace, replacementLine) {
+
+    // Read the file
+    FS.readFile(filePath, 'utf8', (err, data) => {
+        if (err) {
+            console.error('Error reading file:', err);
+            return;
+        }
+
+        // Split the content into lines
+        const lines = data.split('\n');
+
+        // Modify the specific line
+        if (lineIndexToReplace < lines.length) {
+            lines[lineIndexToReplace] = replacementLine;
+        } else {
+            console.error('Line index is out of bounds.');
+            return;
+        }
+
+        // Join the lines back into a single string
+        const updatedContent = lines.join('\n');
+
+        // Write the updated content back to the file
+        FS.writeFile(filePath, updatedContent, 'utf8', (err) => {
+            if (err) {
+                console.error('Error writing file:', err);
+            } else {
+                console.log('File updated successfully.');
+            }
+        });
+    });
+}
+
+function booleanToFlag(bool)
+{
+    return bool ? 1 : 0;
+}
 
 getFileContents("csv/blank.csv");
 getFileContents("csv/blank2.csv");

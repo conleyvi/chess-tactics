@@ -89,7 +89,7 @@ config = {
 function checkAndPlayNext() {
 	// Need to go this way since .moveNumber isn't working...
 	if (game.history()[game.history().length - 1] === moveHistory[game.history().length - 1]) { // correct move
-		
+
 		// play next move if the "Play both sides" box is unchecked
 		if (!$('#playbothsides').is(':checked')) {
 			// Play the opponent's next move from the PGN
@@ -102,7 +102,7 @@ function checkAndPlayNext() {
 		}
 		error = true;
 
-		if(!singleAttempt) {
+		if (!singleAttempt) {
 
 			// Undo that move from the game
 			game.undo();
@@ -529,12 +529,39 @@ function parsePGN(PGNData, fileName) {
 
 				puzzleset.push(puzzle);
 			}
-			catch(error)
-			{
+			catch (error) {
 				console.error(error);
 			}
 		},
 	);
+
+	const dataToSend = {
+		fileName: fileName,
+		games: games
+	};
+
+	fetch('/app/selectSet', {
+		method: 'POST',
+		headers: {
+			'Content-Encoding': 'gzip',
+			'Content-Type': 'application/json',
+			'accept-encoding': 'gzip,deflate'
+		},
+		body: pako.gzip(JSON.stringify(dataToSend))
+	})
+		.then(response => {
+			if (!response.ok) {
+				throw new Error('Network response was not ok');
+			}
+			return response.json();
+		})
+		.then(data => {
+			const puzzlesetMeta = data;
+			console.log('Response from server:', puzzlesetMeta);
+		})
+		.catch(error => {
+			console.error('Error posting data:', error);
+		});
 }
 
 /**
@@ -544,37 +571,37 @@ function pauseGame() {
 	// Start a new counter (to then subtract from overall total)
 	$(window).trigger('resize');
 	switch (pauseflag) {
-	case false:
-		$('#btn_pause_landscape').text('Resume');
-		$('#btn_pause_portrait').text('Resume');
-		pauseflag = true;
-		PauseStartDateTime = new Date();
+		case false:
+			$('#btn_pause_landscape').text('Resume');
+			$('#btn_pause_portrait').text('Resume');
+			pauseflag = true;
+			PauseStartDateTime = new Date();
 
-		// hide the board
-		$('#myBoard').css('display', 'none');
-		$('#blankBoard').css('display', 'block');
+			// hide the board
+			$('#myBoard').css('display', 'none');
+			$('#blankBoard').css('display', 'block');
 
-		// Remove focus on the pause/resume button
-		$('#btn_pause_landscape').blur();
-		$('#btn_pause_portrait').blur();
-		break;
-	case true:
-		$('#btn_pause_landscape').text('Pause');
-		$('#btn_pause_portrait').text('Pause');
-		pauseflag = false;
-		PauseendDateTime = new Date();
+			// Remove focus on the pause/resume button
+			$('#btn_pause_landscape').blur();
+			$('#btn_pause_portrait').blur();
+			break;
+		case true:
+			$('#btn_pause_landscape').text('Pause');
+			$('#btn_pause_portrait').text('Pause');
+			pauseflag = false;
+			PauseendDateTime = new Date();
 
-		// Keep running total of paused time
-		pauseDateTimeTotal += (PauseendDateTime - PauseStartDateTime);
+			// Keep running total of paused time
+			pauseDateTimeTotal += (PauseendDateTime - PauseStartDateTime);
 
-		// show the board
-		$('#myBoard').css('display', 'block');
-		$('#blankBoard').css('display', 'none');
+			// show the board
+			$('#myBoard').css('display', 'block');
+			$('#blankBoard').css('display', 'none');
 
-		// Remove focus on the pause/resume button 
-		$('#btn_pause_landscape').blur();
-		$('#btn_pause_portrait').blur();
-		break;
+			// Remove focus on the pause/resume button 
+			$('#btn_pause_landscape').blur();
+			$('#btn_pause_portrait').blur();
+			break;
 	}
 	$(window).trigger('resize');
 }
@@ -795,7 +822,7 @@ function snapEnd() {
 function startTest() {
 	// Close hover
 	w3_close();
-	
+
 	// Check to make sure that a PGN File was loaded
 	if (puzzleset.length === 0) {
 		return;
