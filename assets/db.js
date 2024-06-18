@@ -1,6 +1,8 @@
 const FS = require('fs');
 const Papa = require('papaparse');
 const PgnParser = require('pgn-parser');
+const seedrandom = require('seedrandom');
+const stringHash = require('string-hash');
 
 function getFileContents(filePath) {
     try {
@@ -37,11 +39,12 @@ function removeFileExtension(filename) {
     }
 }
 
-function shuffleArray(arr) {
-    
+function shuffleArray(arr, seed) {
+    console.log(`Creating RNG with seed ${seed}`);
+    const rng = seedrandom(seed);
     // Perform Fisher-Yates shuffle
     for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
+        const j = Math.floor(rng() * (i + 1));
         [arr[i], arr[j]] = [arr[j], arr[i]];
     }
 
@@ -130,7 +133,7 @@ function startSet(pgnFileName, games, csv, count, randomize) {
     }
 
     if(randomize) {
-        shuffleArray(shuffled);
+        shuffleArray(shuffled, stringHash(pgnFileName) * 37 + count);
     }
 
     var set_csv = '' + headers;
@@ -140,7 +143,7 @@ function startSet(pgnFileName, games, csv, count, randomize) {
         console.log(shuffled[index]);
         var game = games[shuffled[index]-1];
         console.log(JSON.stringify(game));
-        set_csv += template.replace('{index}', index + 1).replace('{random_index}', shuffled[index]).replace('{theme}', 'tactics')
+        set_csv += template.replace('{index}', index + 1).replace('{random_index}', shuffled[index]).replace('{theme}', '\'basic tactics\'')
     }
 
     console.log(set_csv);

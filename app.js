@@ -11,7 +11,7 @@ const port = 80;
 // Middleware to handle gzip compression
 app.use(compression());
 
-// Handle up to 50 megs of JSON
+// Handle up to 50 megabytes of JSON
 app.use(express.json({limit: '50mb'}));
 
 // Endpoint to handle POST requests to /finishPuzzle
