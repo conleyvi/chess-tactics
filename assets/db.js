@@ -60,7 +60,7 @@ function shuffleArray(arr, seed) {
 // One CSV per PGN+attempt that stores results for each individual puzzle
 // If you have 8 attempts at 1 PGN you'll end up with 9 total CSV files
 
-function selectSet(pgnFileName, pgnData)
+function selectSet(pgnFileName, games)
 {
     console.log(`Selecting set ${pgnFileName}`);
 
@@ -88,7 +88,15 @@ function selectSet(pgnFileName, pgnData)
     // If we don't have a set in progress, start one
     if(csv.data.length == 0 || csv.data[csv.data.length -1 ].completed ==  csv.data[csv.data.length -1 ].total) {
         let setNumber = csv.data.length + 1;
-        let gameCount = startSet(pgnFileName, undefined, csv, setNumber, true);
+
+        if(games == undefined) {
+            // Parse the PGN
+            var PGNData = getFileContents(pgnFileName);
+            const splitGames = (string) => PgnParser.parse(PGNData);
+            games = splitGames(PGNData);
+        }
+
+        let gameCount = startSet(pgnFileName, games, csv, setNumber, true);
         console.log(`Started set ${setNumber} with ${gameCount} games`);
         let template = `\n{set},{total},0`;
         contents += template.replace('{set}', setNumber).replace('{total}', gameCount);
@@ -115,14 +123,6 @@ function selectSet(pgnFileName, pgnData)
  */
 function startSet(pgnFileName, games, csv, count, randomize) {
     var headers = 'index,random_index,theme,is_complete,is_correct,is_error,is_timeout,time_taken';
-
-    if(games === undefined) {
-
-        // Parse the PGN
-        var PGNData = getFileContents(pgnFileName);
-        const splitGames = (string) => PgnParser.parse(PGNData);
-        games = splitGames(PGNData);
-    }
 
     console.log(`Starting set ${count} for ${games.length} games in ${pgnFileName}`);
 
@@ -208,6 +208,6 @@ function booleanToFlag(bool)
     return bool ? 1 : 0;
 }
 
-getFileContents("csv/blank.csv");
-getFileContents("csv/blank2.csv");
+//getFileContents("csv/blank.csv");
+//getFileContents("csv/blank2.csv");
 selectSet('/Users/kevinconnelly/Downloads/polgar-mate-in-one.pgn');
