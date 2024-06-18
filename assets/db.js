@@ -37,13 +37,8 @@ function removeFileExtension(filename) {
     }
 }
 
-function shuffleArray(n) {
-    // Create an array with values from 1 to n
-    let arr = [];
-    for (let i = 1; i <= n; i++) {
-        arr.push(i);
-    }
-
+function shuffleArray(arr) {
+    
     // Perform Fisher-Yates shuffle
     for (let i = arr.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -74,7 +69,7 @@ function selectSet(pgnFileName)
     if(contents == '') {
 
         // Initial file will only have headers
-        contents = 'total,completed';
+        contents = 'set,total,complete';
         FS.writeFileSync(csvFileName, contents);
     }
 
@@ -89,8 +84,11 @@ function selectSet(pgnFileName)
 
     // If we don't have a set in progress, start one
     if(csv.data.length == 0 || csv.data[csv.data.length -1 ].completed ==  csv.data[csv.data.length -1 ].total) {
-        let gameCount = startSet(pgnFileName, undefined, csv, csv.data.length + 1);
+        let gameCount = startSet(pgnFileName, undefined, csv, csv.data.length + 1, true);
         console.log(`Started set with ${gameCount} games`);
+        let template = `\n{set},{total},0`;
+        contents += template.replace('{set}', csv.data.length + 1).replace('{total}', gameCount);
+        FS.writeFileSync(csvFileName, contents);
     }
 
 }
@@ -103,7 +101,7 @@ function selectSet(pgnFileName)
  * @param {*} csv 
  * @param {*} count 
  */
-function startSet(pgnFileName, games, csv, count) {
+function startSet(pgnFileName, games, csv, count, randomize) {
     var headers = 'index,random_index,theme,is_complete,is_correct,is_error,is_timeout,time_taken';
 
     if(games === undefined) {
@@ -115,11 +113,20 @@ function startSet(pgnFileName, games, csv, count) {
     }
 
     console.log(`Starting set ${count} for ${games.length} games in ${pgnFileName}`);
-    let shuffled = shuffleArray(games.length);
+    
+    // Create an array with values from 1 to n
+    let shuffled = [];
+    for (let i = 1; i <= games.length; i++) {
+        shuffled.push(i);
+    }
 
-    var set_csv = '' + headers + '\n';
+    if(randomize) {
+        shuffleArray(shuffled);
+    }
 
-    var template = `{index},{random_index},{theme},0,0,0,0,0\n`;
+    var set_csv = '' + headers;
+
+    let template = `\n{index},{random_index},{theme},0,0,0,0,0`;
     for (let index = 0; index < shuffled.length; index++) {
         console.log(shuffled[index]);
         var game = games[shuffled[index]-1];

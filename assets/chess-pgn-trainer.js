@@ -356,7 +356,7 @@ function loadPGNFile() {
 		() => {
 			PGNFile = reader.result;
 			try {
-				parsePGN(PGNFile.trim());  // Clean up the file prior to processing
+				parsePGN(PGNFile.trim(), file.name);  // Clean up the file prior to processing
 
 				// File is now loaded
 				// Update the range of the puzzle counters to the size of the puzzleset
@@ -495,14 +495,14 @@ function onDialogClose() {
  *
  * @param {string} PGNData - The PGN text data to parse. Can comprise of one or more games
  */
-function parsePGN(PGNData) {
+function parsePGN(PGNData, fileName) {
 	const splitGames = (string) => PgnParser.split(string, { startRule: 'games' });
 	const games = splitGames(PGNData);
 
 	puzzleset = [];
 
 	games.forEach(
-		(game) => {
+		(game, index) => {
 			try {
 				const { tags } = PgnParser.parse(game.tags, { startRule: 'tags' });
 				const { moves } = PgnParser.parse(game.pgn, { startRule: 'game' });
@@ -522,6 +522,10 @@ function parsePGN(PGNData) {
 				puzzle.FEN = (tags.FEN);
 				puzzle.PGN = (game.pgn);
 				puzzle.Moves = moves;
+				puzzle.Number = index + 1;
+				puzzle.FileName = fileName;
+
+				console.log(JSON.stringify(puzzle));
 
 				puzzleset.push(puzzle);
 			}
