@@ -194,8 +194,9 @@ function update(puzzle, callback)
     // Compute stats and update the set table
 
     // Use the callback to (possibly) update the UI
+    callback(puzzle);
 
-
+    return puzzle;
 }
 
 function replaceLineInFile(filePath, lineIndexToReplace, replacementLine) {

@@ -116,14 +116,14 @@ function checkAndPlayNext() {
 	if (game.history().length === moveHistory.length || (error && singleAttempt)) {
 		puzzlecomplete = true;
 
-		// Check to see if this is the last puzzle
-		if (increment + 1 === puzzleset.length) {
-			setcomplete = true;
-		}
+		// TODO Perform update on server
+		let puzzle = puzzleset[PuzzleOrder[increment]];
 
-		// Are there more puzzles to go?  If yes, load the next one in the sequence
-		if (increment < puzzleset.length - 1) {
-			increment += 1;
+		// Check to see if this is the last puzzle, with side effect
+		if (++increment === puzzleset.length) {
+			setcomplete = true;
+		} else {
+			// Are there more puzzles to go?  If yes, load the next one in the sequence
 			loadPuzzle(puzzleset[PuzzleOrder[increment]]);
 		}
 	}

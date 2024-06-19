@@ -1,6 +1,6 @@
 const express = require('express');
 const compression = require('compression');
-const path = require('path'); 
+const path = require('path');
 
 // Require the utils.js file
 const { selectSet, update } = require('./assets/db');
@@ -12,30 +12,38 @@ const port = 80;
 app.use(compression());
 
 // Handle up to 50 megabytes of JSON
-app.use(express.json({limit: '50mb'}));
+app.use(express.json({ limit: '50mb' }));
 
 // Endpoint to handle POST requests to /finishPuzzle
 app.post('/app/finishPuzzle', (req, res) => {
-    const puzzleData = req.body;
+    try {
+        const puzzleData = req.body;
 
-    console.log('Received puzzle data:', puzzleData);
-    // Add your processing logic here
-    // For demonstration, just sending back a response
-    res.json({ message: 'Puzzle finished successfully', data: puzzleData });
-
+        console.log('Received puzzle data:', puzzleData);
+        // Add your processing logic here
+        // For demonstration, just sending back a response
+        let result = update(puzzleData, (res) => console.log(JSON.stringify(res)));
+        res.json({ message: 'Puzzle finished successfully', data: puzzleData });
+    }
+    catch (error) {
+        console.error(error);
+    }
 });
 
 // Endpoint to handle POST requests to /selectSet
 app.post('/app/selectSet', (req, res) => {
-    const puzzleData = req.body;
-    console.log('Received puzzle data:', puzzleData);
-    // Calculate the size of the request body in bytes
-    const contentLength = parseInt(req.get('Content-Length'), 10);
-    console.log(`Received ${contentLength} bytes of data`);
-    let result = selectSet(puzzleData.fileName, puzzleData.games);
-    res.json({ message: 'Puzzle finished successfully', data: result });
-
-    //selectSet(puzzleData.pgn);
+    try {
+        const puzzleData = req.body;
+        console.log('Received puzzle data:', puzzleData);
+        // Calculate the size of the request body in bytes
+        const contentLength = parseInt(req.get('Content-Length'), 10);
+        console.log(`Received ${contentLength} bytes of data`);
+        let result = selectSet(puzzleData.fileName, puzzleData.games);
+        res.json({ message: 'Puzzle finished successfully', data: result });
+    }
+    catch (error) {
+        console.error(error);
+    }
 });
 
 // Serve static files from the root directory
