@@ -3,7 +3,7 @@ const compression = require('compression');
 const path = require('path'); 
 
 // Require the utils.js file
-const { selectSet } = require('./assets/db');
+const { selectSet, update } = require('./assets/db');
 
 const app = express();
 const port = 80;
@@ -32,9 +32,8 @@ app.post('/app/selectSet', (req, res) => {
     // Calculate the size of the request body in bytes
     const contentLength = parseInt(req.get('Content-Length'), 10);
     console.log(`Received ${contentLength} bytes of data`);
-    // Add your processing logic here
-    // For demonstration, just sending back a response
-    res.json({ message: 'Puzzle finished successfully', data: puzzleData });
+    let result = selectSet(puzzleData.fileName, puzzleData.games);
+    res.json({ message: 'Puzzle finished successfully', data: result });
 
     //selectSet(puzzleData.pgn);
 });

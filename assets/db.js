@@ -1,3 +1,4 @@
+const { setServers } = require('dns');
 const FS = require('fs');
 const Papa = require('papaparse');
 const PgnParser = require('pgn-parser');
@@ -110,7 +111,16 @@ function selectSet(pgnFileName, games)
         console.log(JSON.stringify(csv.meta));
         console.log(csv.data.length);
     }
-    return csv.data[csv.data.length - 1];
+
+    // Need to return the set number, completed count, and ordering
+    var ordering = extractOrdering(pgnFileName, csv.data[csv.data.length - 1].set);
+
+    const result = {};
+    result.set = csv.data[csv.data.length - 1].set;
+    result.total = csv.data[csv.data.length - 1].total;
+    result.complete = csv.data[csv.data.length - 1].complete;
+    result.ordering = ordering;
+    return result;
 }
 
 /**
@@ -147,10 +157,29 @@ function startSet(pgnFileName, games, csv, count, randomize) {
     }
 
     console.log(set_csv);
-    var csvFileName = 'csv/' + removeFileExtension(extractFileName(pgnFileName)) + '-' + count + '.csv';
-    FS.writeFileSync(csvFileName, set_csv);
+    FS.writeFileSync(csvFileNamePerSet(pgnFileName, count), set_csv);
 
     return games.length;
+}
+
+function extractOrdering(pgnFileName, setNumber) {
+    let csvFileName = csvFileNamePerSet(pgnFileName, setNumber);
+    // First, parse CSV
+    var csv = Papa.parse(getFileContents(csvFileName), {
+        header: true,
+        dynamicTyping: true
+    });
+
+    var ordering = [];
+    for (let index = 0; index < csv.data.length; index++) {
+        ordering[index] = csv.data[index].random_index;
+    }
+    console.log(ordering);
+    return ordering;
+}
+
+function csvFileNamePerSet(pgnFileName, setNumber) {
+    return 'csv/' + removeFileExtension(extractFileName(pgnFileName)) + '-' + setNumber + '.csv';
 }
 
 /**
@@ -207,6 +236,8 @@ function booleanToFlag(bool)
 {
     return bool ? 1 : 0;
 }
+
+module.exports = {selectSet, update};
 
 //getFileContents("csv/blank.csv");
 //getFileContents("csv/blank2.csv");
