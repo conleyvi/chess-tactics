@@ -31,7 +31,7 @@ function extractFileName(path) {
 function removeFileExtension(filename) {
     // Find the last occurrence of '.'
     const lastDotIndex = filename.lastIndexOf('.');
-    
+
     // If '.' is found and it's not the first character
     if (lastDotIndex !== -1 && lastDotIndex > 0) {
         return filename.substring(0, lastDotIndex);
@@ -61,20 +61,18 @@ function shuffleArray(arr, seed) {
 // One CSV per PGN+attempt that stores results for each individual puzzle
 // If you have 8 attempts at 1 PGN you'll end up with 9 total CSV files
 
-function selectSet(pgnFileName, games)
-{
+function selectSet(pgnFileName, games) {
     console.log(`Selecting set ${pgnFileName}`);
 
     // Check if we've already created a table for this PGN
-    var csvFileName = 'csv/' + removeFileExtension(extractFileName(pgnFileName)) + '.csv';
-    var contents = getFileContents(csvFileName);
-    
+    var contents = getFileContents(csvFileName(pgnFileName));
+
     // If we don't have a file for this set, create it
-    if(contents == '') {
+    if (contents == '') {
 
         // Initial file will only have headers
         contents = 'set,total,complete';
-        FS.writeFileSync(csvFileName, contents);
+        FS.writeFileSync(csvFileName(pgnFileName), contents);
     }
 
     // First, parse CSV
@@ -87,10 +85,10 @@ function selectSet(pgnFileName, games)
     console.log(csv.data.length);
 
     // If we don't have a set in progress, start one
-    if(csv.data.length == 0 || csv.data[csv.data.length -1 ].completed ==  csv.data[csv.data.length -1 ].total) {
+    if (csv.data.length == 0 || csv.data[csv.data.length - 1].completed == csv.data[csv.data.length - 1].total) {
         let setNumber = csv.data.length + 1;
 
-        if(games == undefined) {
+        if (games == undefined) {
             // Parse the PGN
             var PGNData = getFileContents(pgnFileName);
             const splitGames = (string) => PgnParser.parse(PGNData);
@@ -142,7 +140,7 @@ function startSet(pgnFileName, games, csv, count, randomize) {
         shuffled.push(i);
     }
 
-    if(randomize) {
+    if (randomize) {
         shuffleArray(shuffled, stringHash(pgnFileName) * 37 + count);
     }
 
@@ -151,7 +149,7 @@ function startSet(pgnFileName, games, csv, count, randomize) {
     let template = `\n{index},{random_index},'{theme}',0,0,0,0,0`;
     for (let index = 0; index < shuffled.length; index++) {
         console.log(shuffled[index]);
-        var game = games[shuffled[index]-1];
+        var game = games[shuffled[index] - 1];
         console.log(JSON.stringify(game));
         set_csv += template.replace('{index}', index + 1).replace('{random_index}', shuffled[index]).replace('{theme}', 'basic tactics')
     }
@@ -178,6 +176,10 @@ function extractOrdering(pgnFileName, setNumber) {
     return ordering;
 }
 
+function csvFileName(pgnFileName) {
+    return 'csv/' + removeFileExtension(extractFileName(pgnFileName)) + '.csv';
+}
+
 function csvFileNamePerSet(pgnFileName, setNumber) {
     return 'csv/' + removeFileExtension(extractFileName(pgnFileName)) + '-' + setNumber + '.csv';
 }
@@ -187,21 +189,63 @@ function csvFileNamePerSet(pgnFileName, setNumber) {
  * @param {*} puzzle Map of the puzzle we want to turn into a line in the CSV
  * @param {*} callback 
  */
-function update(puzzle, callback)
-{
+function update(puzzle, callback) {
     // Write the updated CSV for the current set
-    let template = `{index},{random_index},'{theme}',{is_complete},{is_correct},{is_error},{is_timeout},{time_taken}`;
-    var replacementLine = template.replace('{index}',puzzle.Order).replace('{random_index}',puzzle.Number).replace('{theme}', puzzle.Theme).replace('{is_complete}',booleanToFlag(puzzle.Complete))
-    .replace('{is_correct}',booleanToFlag(puzzle.Solved)).replace('{is_error}',booleanToFlag(!puzzle.Solved)).replace('{is_timeout}',booleanToFlag(puzzle.Timeout)).replace('{time_taken}',puzzle.TimeMs);
+    {
+        let template = `{index},{random_index},'{theme}',{is_complete},{is_correct},{is_error},{is_timeout},{time_taken}`;
+        var replacementLine = template.replace('{index}', puzzle.Order).replace('{random_index}', puzzle.Number).replace('{theme}', puzzle.Theme).replace('{is_complete}', booleanToFlag(puzzle.Complete))
+            .replace('{is_correct}', booleanToFlag(puzzle.Solved)).replace('{is_error}', booleanToFlag(!puzzle.Solved)).replace('{is_timeout}', booleanToFlag(puzzle.Timeout)).replace('{time_taken}', puzzle.TimeMs);
 
-    replaceLineInFile(csvFileNamePerSet(puzzle.FileName, puzzle.Set), puzzle.Order, replacementLine);
+        let csv = csvFileNamePerSet(puzzle.FileName, puzzle.Set);
+        replaceLineInFile(csv, puzzle.Order, replacementLine);
+    }
 
     // Compute stats and update the set table
+    let stats = computeOverallStats(csvFileNamePerSet(puzzle.FileName, puzzle.Set));
+
+    // Update overall CSV
+    {
+        let template = `{set},{total},{complete}`;
+        var replacementLine = template.replace('{set}', puzzle.Set).replace('{total}', stats.total).replace('{complete}', stats.complete);
+
+        let csv = csvFileName(puzzle.FileName);
+        replaceLineInFile(csv, puzzle.Set, replacementLine);
+    }
 
     // Use the callback to (possibly) update the UI
     callback(puzzle);
 
     return puzzle;
+}
+
+function computeOverallStats(csvFileName) {
+    var csv = Papa.parse(getFileContents(csvFileName), {
+        header: true,
+        dynamicTyping: true
+    });
+
+    let stats = {};
+    stats.total = 0;
+    stats.complete = 0;
+    stats.failed = 0;
+    stats.solved = 0;
+    stats.timedOut = 0;
+    stats.timeTaken = 0;
+    for (let puzzle of csv.data) {
+        stats.total++;
+        if (flagToBoolean(puzzle.is_complete)) {
+            stats.complete++;
+            if (flagToBoolean(puzzle.is_timeout)) {
+                stats.timedOut++;
+            } else if (flagToBoolean(puzzle.is_correct)) {
+                stats.solved++;
+            } else {
+                stats.failed++;
+            }
+            stats.timeTaken += puzzle.timeTaken;
+        }
+    }
+    return stats;
 }
 
 function replaceLineInFile(filePath, lineIndexToReplace, replacementLine) {
@@ -232,23 +276,21 @@ function replaceLineInFile(filePath, lineIndexToReplace, replacementLine) {
             if (err) {
                 console.error('Error writing file:', err);
             } else {
-                console.log('File updated successfully.');
+                //console.log('File updated successfully.');
             }
         });
     });
 }
 
-function booleanToFlag(bool)
-{
+function booleanToFlag(bool) {
     return bool ? 1 : 0;
 }
 
-function flagToBoolean(flag)
-{
+function flagToBoolean(flag) {
     return flag == 0 ? false : true;
 }
 
-module.exports = {selectSet, update};
+module.exports = { selectSet, update };
 
 //getFileContents("csv/blank.csv");
 //getFileContents("csv/blank2.csv");
