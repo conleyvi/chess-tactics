@@ -148,12 +148,12 @@ function startSet(pgnFileName, games, csv, count, randomize) {
 
     var set_csv = '' + headers;
 
-    let template = `\n{index},{random_index},{theme},0,0,0,0,0`;
+    let template = `\n{index},{random_index},'{theme}',0,0,0,0,0`;
     for (let index = 0; index < shuffled.length; index++) {
         console.log(shuffled[index]);
         var game = games[shuffled[index]-1];
         console.log(JSON.stringify(game));
-        set_csv += template.replace('{index}', index + 1).replace('{random_index}', shuffled[index]).replace('{theme}', '\'basic tactics\'')
+        set_csv += template.replace('{index}', index + 1).replace('{random_index}', shuffled[index]).replace('{theme}', 'basic tactics')
     }
 
     console.log(set_csv);
@@ -190,6 +190,11 @@ function csvFileNamePerSet(pgnFileName, setNumber) {
 function update(puzzle, callback)
 {
     // Write the updated CSV for the current set
+    let template = `{index},{random_index},'{theme}',{is_complete},{is_correct},{is_error},{is_timeout},{time_taken}`;
+    var replacementLine = template.replace('{index}',puzzle.Order).replace('{random_index}',puzzle.Number).replace('{theme}', puzzle.Theme).replace('{is_complete}',booleanToFlag(puzzle.Complete))
+    .replace('{is_correct}',booleanToFlag(puzzle.Solved)).replace('{is_error}',booleanToFlag(!puzzle.Solved)).replace('{is_timeout}',booleanToFlag(puzzle.Timeout)).replace('{time_taken}',puzzle.TimeMs);
+
+    replaceLineInFile(csvFileNamePerSet(puzzle.FileName, puzzle.Set), puzzle.Order, replacementLine);
 
     // Compute stats and update the set table
 
@@ -236,6 +241,11 @@ function replaceLineInFile(filePath, lineIndexToReplace, replacementLine) {
 function booleanToFlag(bool)
 {
     return bool ? 1 : 0;
+}
+
+function flagToBoolean(flag)
+{
+    return flag == 0 ? false : true;
 }
 
 module.exports = {selectSet, update};
