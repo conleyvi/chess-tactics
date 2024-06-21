@@ -1,4 +1,3 @@
-const { setServers } = require('dns');
 const FS = require('fs');
 const Papa = require('papaparse');
 const PgnParser = require('pgn-parser');
@@ -226,7 +225,7 @@ function update(puzzle, callback) {
     // Write the updated CSV for the current set
     {
         let template = `{index},{random_index},'{theme}',{is_complete},{is_correct},{is_error},{is_timeout},{time_taken}`;
-        var replacementLine = template.replace('{index}', puzzle.Order).replace('{random_index}', puzzle.Number).replace('{theme}', puzzle.Theme).replace('{is_complete}', booleanToFlag(puzzle.Complete))
+        var replacementLine = template.replace('{index}', puzzle.Order).replace('{random_index}', puzzle.Number).replace('{theme}', puzzle.Theme).replace('{is_complete}', booleanToFlag(puzzle.Finished))
             .replace('{is_correct}', booleanToFlag(puzzle.Solved)).replace('{is_error}', booleanToFlag(!puzzle.Solved)).replace('{is_timeout}', booleanToFlag(puzzle.Timeout)).replace('{time_taken}', puzzle.TimeMs);
 
         let csv = csvFileNamePerSet(puzzle.FileName, puzzle.Set);

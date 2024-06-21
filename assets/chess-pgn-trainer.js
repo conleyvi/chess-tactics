@@ -38,6 +38,7 @@ let pauseflag = false;
 let increment = 0;
 let PuzzleOrder = [];
 let singleAttempt = false;
+let setnumber = 0;
 
 // Promotion variables
 let promoteTo;
@@ -48,6 +49,7 @@ let PauseStartDateTime;
 let PauseendDateTime;
 let startDateTime = new Date();
 let pauseDateTimeTotal = 0;
+let puzzleElapsed = 0;
 
 // -------------
 // Initial Setup
@@ -119,9 +121,18 @@ function checkAndPlayNext() {
 		puzzlecomplete = true;
 
 		// Perform update on server
-		let puzzle = puzzleset[PuzzleOrder[increment] - 1];
-
+		let puzzle = _.cloneDeep(puzzleset[PuzzleOrder[increment] - 1]);
+		
 		// Actual update can happen asynchronously
+		puzzle.Finished = true;
+		puzzle.Order = increment + 1;
+		puzzle.Set = setnumber;
+		puzzle.Theme = 'tactic';
+		puzzle.Solved = !error;
+		puzzle.Timeout = false;
+		puzzle.TimeMs = 
+
+		console.log(JSON.stringify(puzzle));
 
 		// Check to see if this is the last puzzle, with side effect
 		if (++increment === puzzleset.length) {
@@ -466,6 +477,12 @@ function loadPuzzle(PGNPuzzle) {
 
 	// Update the status of the game in memory with the new data
 	indicateMove();
+
+	// Start the timer
+	startTimer(5, (minutes, seconds, tenths, elapsed) => {
+		puzzleElapsed = elapsed;
+		console.log(`Puzzle elapsed time: ${puzzleElapsed}`);
+	});
 }
 
 /**
@@ -633,6 +650,8 @@ function resetGame() {
 	setcomplete = false;
 	AnalysisLink = false;
 	increment = 0;
+	setnumber = 0;
+	puzzleElapsed = 0;
 
 	// Create the boards
 	board = new Chessboard('myBoard', config);
@@ -905,6 +924,7 @@ async function startTest() {
 			console.log('Response from server:', puzzlesetMeta);
 			// 1-indexed array
 			PuzzleOrder = puzzlesetMeta.ordering;
+			setnumber = puzzlesetMeta.set;
 		})
 		.catch(error => {
 			console.error('Error posting data:', error);

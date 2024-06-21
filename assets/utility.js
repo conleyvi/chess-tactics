@@ -5,32 +5,43 @@
  * callback - function to handle timer output
  */ 
 function startTimer(duration, callback) {
-	let timer = duration * 10;
+	let timer = duration * 1000;
+    let start = Date.now();
 	let interval = setInterval(function () {
-	  let minutes = Math.floor(timer / 600);
-	  let seconds = Math.floor((timer % 600) / 10);
-	  let tenths = (timer % 10); // Get tenths of a second
+      let elapsed = Date.now() - start;
+      let remaining = timer - elapsed;
+	  if (remaining < 0) {
+		remaining = 0; // Stop the timer when it reaches 0
+	  }
+	  var minutes = Math.floor(remaining / 60000);
+	  var seconds = Math.floor((remaining % 60000) / 1000);
+	  var tenths = Math.floor((remaining % 1000) / 100) ; // Get tenths of a second
+
+      if(tenths == 10) {
+        seconds += 1;
+        tenths = 0;
+      }
   
 	  minutes = minutes < 10 ? "0" + minutes : minutes;
 	  seconds = seconds < 10 ? "0" + seconds : seconds;
   
-	  callback(minutes, seconds, tenths);
-  
-	  if (--timer < 0) {
+	  callback(minutes, seconds, tenths, elapsed);
+
+      if(remaining <= 0) {
         clearInterval(interval);
-		timer = 0; // Stop the timer when it reaches 0
-	  }
+      }
+  
 	}, 100); // Update timer every 100 milliseconds (0.1 seconds)
   }
 
-function updateDisplay(minutes, seconds, tenths)
+function updateDisplay(minutes, seconds, tenths, elapsed)
 {
 	display.textContent = minutes + ":" + seconds + "." + tenths;
 }
 
-function logTimerToConsole(minutes, seconds, tenths)
+function logTimerToConsole(minutes, seconds, tenths, elapsed)
 {
-	console.log(minutes + ":" + seconds + "." + tenths);
+	console.log(minutes + ":" + seconds + "." + tenths + ' elapsed = ' + elapsed);
 }
 
-startTimer(61, logTimerToConsole);
+//startTimer(5, logTimerToConsole);
