@@ -25,7 +25,7 @@ function startTimer(duration, callback) {
 	  minutes = minutes < 10 ? "0" + minutes : minutes;
 	  seconds = seconds < 10 ? "0" + seconds : seconds;
   
-	  callback(minutes, seconds, tenths, elapsed);
+	  callback(minutes, seconds, tenths, elapsed, remaining);
 
       if(remaining <= 0) {
         clearInterval(interval);
@@ -34,12 +34,12 @@ function startTimer(duration, callback) {
 	}, 100); // Update timer every 100 milliseconds (0.1 seconds)
   }
 
-function updateDisplay(minutes, seconds, tenths, elapsed)
+function updateDisplay(minutes, seconds, tenths, elapsed, remaining)
 {
 	display.textContent = minutes + ":" + seconds + "." + tenths;
 }
 
-function logTimerToConsole(minutes, seconds, tenths, elapsed)
+function logTimerToConsole(minutes, seconds, tenths, elapsed, remaining)
 {
 	console.log(minutes + ":" + seconds + "." + tenths + ' elapsed = ' + elapsed);
 }

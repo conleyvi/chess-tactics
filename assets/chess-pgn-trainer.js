@@ -39,6 +39,7 @@ let increment = 0;
 let PuzzleOrder = [];
 let singleAttempt = false;
 let setnumber = 0;
+let timedout = false;
 
 // Promotion variables
 let promoteTo;
@@ -99,6 +100,8 @@ function checkAndPlayNext() {
 			// Play the opponent's next move from the PGN
 			game.move(moveHistory[game.history().length]);
 		}
+	} else if(timedout) {
+		// Nothing to do
 	} else { // wrong move
 
 		if (error === false) { // Add one to the error count for any given puzzle
@@ -117,7 +120,7 @@ function checkAndPlayNext() {
 	}
 
 	// Check if all the expected moves have been played
-	if (game.history().length === moveHistory.length || (error && singleAttempt)) {
+	if (game.history().length === moveHistory.length || (error && singleAttempt) || timedout) {
 		puzzlecomplete = true;
 
 		// Perform update on server
@@ -128,11 +131,35 @@ function checkAndPlayNext() {
 		puzzle.Order = increment + 1;
 		puzzle.Set = setnumber;
 		puzzle.Theme = 'tactic';
-		puzzle.Solved = !error;
-		puzzle.Timeout = false;
-		puzzle.TimeMs = 
+		puzzle.Solved = !error && !timedout;
+		puzzle.Timeout = timedout;
+		puzzle.TimeMs = puzzleElapsed;
 
 		console.log(JSON.stringify(puzzle));
+	
+		fetch('/app/finishPuzzle', {
+			method: 'POST',
+			headers: {
+				'Content-Encoding': 'gzip',
+				'Content-Type': 'application/json',
+				'accept-encoding': 'gzip,deflate'
+			},
+			body: pako.gzip(JSON.stringify(puzzle))
+		})
+			.then(response => {
+				if (!response.ok) {
+					throw new Error('Network response was not ok');
+				}
+				return response.json();
+			})
+			.then(data => {
+				const puzzlesetMeta = data.data;
+				console.log('Response from server:', puzzlesetMeta);
+				// 1-indexed array
+			})
+			.catch(error => {
+				console.error('Error posting data:', error);
+			});
 
 		// Check to see if this is the last puzzle, with side effect
 		if (++increment === puzzleset.length) {
@@ -420,6 +447,8 @@ function loadPuzzle(PGNPuzzle) {
 	// Set the error flag to false for this puzzle (ie: only count 1 error per puzzle)
 	error = false;
 	puzzlecomplete = false;
+	timedout = false;
+	puzzleElapsed = 0;
 
 	// Load the board position into memory
 	game = new Chess(PGNPuzzle.FEN);
@@ -479,9 +508,13 @@ function loadPuzzle(PGNPuzzle) {
 	indicateMove();
 
 	// Start the timer
-	startTimer(5, (minutes, seconds, tenths, elapsed) => {
+	startTimer(5, (minutes, seconds, tenths, elapsed, remaining) => {
 		puzzleElapsed = elapsed;
 		console.log(`Puzzle elapsed time: ${puzzleElapsed}`);
+		if(remaining <= 0) {
+			timedout = true;
+			checkAndPlayNext();
+		}
 	});
 }
 
@@ -652,6 +685,7 @@ function resetGame() {
 	increment = 0;
 	setnumber = 0;
 	puzzleElapsed = 0;
+	timedout = false;
 
 	// Create the boards
 	board = new Chessboard('myBoard', config);

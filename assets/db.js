@@ -222,11 +222,17 @@ function csvFileNamePerSet(pgnFileName, setNumber) {
  * @param {*} callback 
  */
 function update(puzzle, callback) {
+
+    if (puzzle.Set == 0) {
+        // Don't accept a 0 set
+        return puzzle;
+    }
+
     // Write the updated CSV for the current set
     {
         let template = `{index},{random_index},'{theme}',{is_complete},{is_correct},{is_error},{is_timeout},{time_taken}`;
         var replacementLine = template.replace('{index}', puzzle.Order).replace('{random_index}', puzzle.Number).replace('{theme}', puzzle.Theme).replace('{is_complete}', booleanToFlag(puzzle.Finished))
-            .replace('{is_correct}', booleanToFlag(puzzle.Solved)).replace('{is_error}', booleanToFlag(!puzzle.Solved)).replace('{is_timeout}', booleanToFlag(puzzle.Timeout)).replace('{time_taken}', puzzle.TimeMs);
+            .replace('{is_correct}', booleanToFlag(puzzle.Solved)).replace('{is_error}', booleanToFlag(!puzzle.Solved && !puzzle.Timeout)).replace('{is_timeout}', booleanToFlag(puzzle.Timeout)).replace('{time_taken}', puzzle.TimeMs);
 
         let csv = csvFileNamePerSet(puzzle.FileName, puzzle.Set);
         replaceLineInFile(csv, puzzle.Order, replacementLine);
@@ -264,31 +270,28 @@ function computeOverallStats(csvFileName) {
     stats.timedOut = 0;
     stats.timeTaken = 0;
     for (let puzzle of csv.data) {
-        stats.total++;
+        ++stats.total;
         if (flagToBoolean(puzzle.is_complete)) {
-            stats.finished++;
+            ++stats.finished;
             if (flagToBoolean(puzzle.is_timeout)) {
-                stats.timedOut++;
+                ++stats.timedOut;
             } else if (flagToBoolean(puzzle.is_correct)) {
-                stats.solved++;
+                ++stats.solved;
             } else {
-                stats.failed++;
+                ++stats.failed;
             }
-            stats.timeTaken += puzzle.timeTaken;
+            stats.timeTaken += puzzle.time_taken;
         }
     }
+    console.log(JSON.stringify(stats));
     return stats;
 }
 
 function replaceLineInFile(filePath, lineIndexToReplace, replacementLine) {
 
-    // Read the file
-    FS.readFile(filePath, 'utf8', (err, data) => {
-        if (err) {
-            console.error('Error reading file:', err);
-            return;
-        }
-
+    try {
+        // Synchronously read from a file
+        const data = FS.readFileSync(filePath, 'utf8');
         // Split the content into lines
         const lines = data.split('\n');
 
@@ -304,14 +307,10 @@ function replaceLineInFile(filePath, lineIndexToReplace, replacementLine) {
         const updatedContent = lines.join('\n');
 
         // Write the updated content back to the file
-        FS.writeFile(filePath, updatedContent, 'utf8', (err) => {
-            if (err) {
-                console.error('Error writing file:', err);
-            } else {
-                //console.log('File updated successfully.');
-            }
-        });
-    });
+        FS.writeFileSync(filePath, updatedContent, 'utf8');
+    } catch (err) {
+        console.error('Error reading/writing file:', err);
+    }
 }
 
 function booleanToFlag(bool) {
@@ -319,7 +318,7 @@ function booleanToFlag(bool) {
 }
 
 function flagToBoolean(flag) {
-    return flag == 0 ? false : true;
+    return flag === 0 ? false : true;
 }
 
 module.exports = { select, start, update };
@@ -327,3 +326,4 @@ module.exports = { select, start, update };
 //getFileContents("csv/blank.csv");
 //getFileContents("csv/blank2.csv");
 console.log(JSON.stringify(select('/Users/kevinconnelly/Downloads/polgar-mate-in-one.pgn')));
+computeOverallStats(csvFileNamePerSet('/Users/kevinconnelly/Downloads/polgar-mate-in-one.pgn', 1));
