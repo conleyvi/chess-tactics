@@ -3,7 +3,7 @@ const compression = require('compression');
 const path = require('path');
 
 // Require the utils.js file
-const { selectSet, update } = require('./assets/db');
+const { select, start, update } = require('./assets/db');
 
 const app = express();
 const port = 80;
@@ -38,8 +38,21 @@ app.post('/app/selectSet', (req, res) => {
         // Calculate the size of the request body in bytes
         const contentLength = parseInt(req.get('Content-Length'), 10);
         console.log(`Received ${contentLength} bytes of data`);
-        let result = selectSet(puzzleData.fileName, puzzleData.games);
+        let result = start(puzzleData.fileName, puzzleData.games);
         res.json({ message: 'Puzzle finished successfully', data: result });
+    }
+    catch (error) {
+        console.error(error);
+    }
+});
+
+// Endpoint to handle GET requests to /selectSet
+app.get('/app/select', (req, res) => {
+    try {
+        // Retrieve query parameters from req.query object
+        const pgnFileName = req.query.pgnFileName;
+        let result = select(pgnFileName);
+        res.json({ message: 'Selected PGN file successfully', data: result });
     }
     catch (error) {
         console.error(error);

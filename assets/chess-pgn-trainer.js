@@ -27,6 +27,8 @@ let AnalysisLink = false;
 // Game & Performance variables
 let moveCfg;
 let moveHistory;
+let fileName;
+let games;
 let puzzleset;
 let errorcount;
 let error;
@@ -347,21 +349,20 @@ function loadPGNFile() {
 	const [file] = document.getElementById('openPGN').files;
 	const reader = new FileReader();
 
-	// TODO If we are mid-set, change 'Start' to 'Continue'
-
 	resetGame();
 
 	reader.addEventListener(
 		'load',
-		() => {
+		async () => {
 			PGNFile = reader.result;
 			try {
-				parsePGN(PGNFile.trim(), file.name);  // Clean up the file prior to processing
+				await parsePGN(PGNFile.trim(), fileName);  // Clean up the file prior to processing
 
 				// File is now loaded
 				// Update the range of the puzzle counters to the size of the puzzleset
-				$('#puzzleNumber_landscape').text('1');
-				$('#puzzleNumber_portrait').text('1');
+				console.log('increment at time of update ' + increment);
+				$('#puzzleNumber_landscape').text(increment);
+				$('#puzzleNumber_portrait').text(increment);
 
 				$('#puzzleNumbertotal_landscape').text(puzzleset.length);
 				$('#puzzleNumbertotal_portrait').text(puzzleset.length);
@@ -383,6 +384,7 @@ function loadPGNFile() {
 	);
 
 	if (file) {
+		fileName = file.name;
 		reader.readAsText(file);
 	}
 
@@ -495,9 +497,9 @@ function onDialogClose() {
  *
  * @param {string} PGNData - The PGN text data to parse. Can comprise of one or more games
  */
-function parsePGN(PGNData, fileName) {
+async function parsePGN(PGNData, fileName) {
 	const splitGames = (string) => PgnParser.split(string, { startRule: 'games' });
-	const games = splitGames(PGNData);
+	games = splitGames(PGNData);
 
 	puzzleset = [];
 
@@ -534,34 +536,49 @@ function parsePGN(PGNData, fileName) {
 			}
 		},
 	);
+	// Basically just need to know if a set is currently open, and if so how many puzzles have been completed thus far
 
-	const dataToSend = {
-		fileName: fileName,
-		games: games
-	};
+	// Base URL for the API endpoint
+	const baseUrl = '/app/select';
 
-	fetch('/app/selectSet', {
-		method: 'POST',
-		headers: {
-			'Content-Encoding': 'gzip',
-			'Content-Type': 'application/json',
-			'accept-encoding': 'gzip,deflate'
-		},
-		body: pako.gzip(JSON.stringify(dataToSend))
-	})
+	// Query string parameters
+	const params = new URLSearchParams();
+	params.append('pgnFileName', fileName);
+
+	// Constructing the full URL with parameters
+	const url = `${baseUrl}?${params.toString()}`;
+
+	// Making the GET request using fetch
+	await fetch(url)
 		.then(response => {
 			if (!response.ok) {
 				throw new Error('Network response was not ok');
 			}
-			return response.json();
+			return response.json(); // Assuming response is JSON; use .text() or other methods as needed
 		})
 		.then(data => {
-			const puzzlesetMeta = data;
-			console.log('Response from server:', puzzlesetMeta);
+			// Handle the data from the response
+			console.log(data.data);
+			console.log(data.data.finished);
+			increment = data.data.finished;
+
+			console.log(increment);
+			
+			// TODO If we are mid-set, change 'Start' to 'Continue'
+			if(increment > 0) {
+				console.log('Changing Start to Continue...');
+				$('#btn_starttest_landscape').html('Continue');
+				$('#btn_starttest_portrait').html('Continue');
+			}
+				
 		})
 		.catch(error => {
-			console.error('Error posting data:', error);
+			// Handle errors
+			console.error('Error fetching data:', error);
 		});
+
+		console.log("Finished api call");
+
 }
 
 /**
@@ -610,10 +627,14 @@ function pauseGame() {
  * Reset everything in order to start a new testing session
  */
 function resetGame() {
+	console.log('Resetting game...');
+
 	// Reset the current game in memory
 	board = null;
 	game = new Chess();
 	moveHistory = [];
+	fileName = null;
+	games = [];
 	puzzleset = [];
 	errorcount = 0;
 	pauseDateTimeTotal = 0;
@@ -633,6 +654,9 @@ function resetGame() {
 	$('#puzzleNumber_portrait').text('0');
 	$('#puzzleNumbertotal_landscape').text('0');
 	$('#puzzleNumbertotal_portrait').text('0');
+
+	$('#btn_starttest_landscape').html('Start');
+	$('#btn_starttest_portrait').html('Start');
 
 	// Show Start button and hide "Pause" and "Restart" buttons
 	setDisplayAndDisabled(['#btn_starttest_landscape', '#btn_starttest_portrait'], 'block', true);
@@ -862,6 +886,35 @@ function startTest() {
 	if ($('#singleAttempt').is(':checked')) {
 		singleAttempt = true;
 	}
+
+	// TODO Set filename globally, use puzzle set
+	const dataToSend = {
+		fileName: fileName,
+		games: games
+	};
+
+	fetch('/app/selectSet', {
+		method: 'POST',
+		headers: {
+			'Content-Encoding': 'gzip',
+			'Content-Type': 'application/json',
+			'accept-encoding': 'gzip,deflate'
+		},
+		body: pako.gzip(JSON.stringify(dataToSend))
+	})
+		.then(response => {
+			if (!response.ok) {
+				throw new Error('Network response was not ok');
+			}
+			return response.json();
+		})
+		.then(data => {
+			const puzzlesetMeta = data;
+			console.log('Response from server:', puzzlesetMeta);
+		})
+		.catch(error => {
+			console.error('Error posting data:', error);
+		});
 
 	// Shuffle the set if the box is checked
 	if ($('#randomizeSet').is(':checked')) {

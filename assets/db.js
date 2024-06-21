@@ -55,14 +55,47 @@ function shuffleArray(arr, seed) {
 /**
  * 
  * Use a bunch of CSV files to simulate a DB where we can store puzzle progress and stats.
+ * 
+ * One CSV per PGN that stores overall stats and progress
+ * One CSV per PGN+attempt that stores results for each individual puzzle
+ * If you have 8 attempts at 1 PGN you'll end up with 9 total CSV files
  */
-
-// One CSV per PGN that stores overall stats and progress
-// One CSV per PGN+attempt that stores results for each individual puzzle
-// If you have 8 attempts at 1 PGN you'll end up with 9 total CSV files
-
-function selectSet(pgnFileName, games) {
+function select(pgnFileName) {
     console.log(`Selecting set ${pgnFileName}`);
+
+    // Check if we've already created a table for this PGN
+    var contents = getFileContents(csvFileName(pgnFileName));
+
+    const output = {};
+    output.finished = 0;
+
+    // If we don't have a file for this set, create it
+    if (contents == '') {
+
+        // Initial file will only have headers
+        contents = 'set,total,finished';
+        FS.writeFileSync(csvFileName(pgnFileName), contents);
+        return output;
+    }
+
+    // Parse CSV
+    var csv = Papa.parse(contents, {
+        header: true,
+        dynamicTyping: true
+    });
+    //console.log(JSON.stringify(csv.data));
+    //console.log(JSON.stringify(csv.meta));
+    //console.log(csv.data.length);
+
+    if (csv.data.length == 0 || csv.data[csv.data.length - 1].finished == csv.data[csv.data.length - 1].total) {
+        return output;
+    }
+    output.finished = csv.data[csv.data.length - 1].finished;
+    return output;
+}
+
+function start(pgnFileName, games) {
+    console.log(`Starting set ${pgnFileName}`);
 
     // Check if we've already created a table for this PGN
     var contents = getFileContents(csvFileName(pgnFileName));
@@ -71,7 +104,7 @@ function selectSet(pgnFileName, games) {
     if (contents == '') {
 
         // Initial file will only have headers
-        contents = 'set,total,complete';
+        contents = 'set,total,finished';
         FS.writeFileSync(csvFileName(pgnFileName), contents);
     }
 
@@ -85,7 +118,7 @@ function selectSet(pgnFileName, games) {
     console.log(csv.data.length);
 
     // If we don't have a set in progress, start one
-    if (csv.data.length == 0 || csv.data[csv.data.length - 1].completed == csv.data[csv.data.length - 1].total) {
+    if (csv.data.length == 0 || csv.data[csv.data.length - 1].finished == csv.data[csv.data.length - 1].total) {
         let setNumber = csv.data.length + 1;
 
         if (games == undefined) {
@@ -110,13 +143,13 @@ function selectSet(pgnFileName, games) {
         console.log(csv.data.length);
     }
 
-    // Need to return the set number, completed count, and ordering
+    // Need to return the set number, finished count, and ordering
     var ordering = extractOrdering(pgnFileName, csv.data[csv.data.length - 1].set);
 
     const result = {};
     result.set = csv.data[csv.data.length - 1].set;
     result.total = csv.data[csv.data.length - 1].total;
-    result.complete = csv.data[csv.data.length - 1].complete;
+    result.finished = csv.data[csv.data.length - 1].finished;
     result.ordering = ordering;
     return result;
 }
@@ -205,8 +238,8 @@ function update(puzzle, callback) {
 
     // Update overall CSV
     {
-        let template = `{set},{total},{complete}`;
-        var replacementLine = template.replace('{set}', puzzle.Set).replace('{total}', stats.total).replace('{complete}', stats.complete);
+        let template = `{set},{total},{finished}`;
+        var replacementLine = template.replace('{set}', puzzle.Set).replace('{total}', stats.total).replace('{finished}', stats.finished);
 
         let csv = csvFileName(puzzle.FileName);
         replaceLineInFile(csv, puzzle.Set, replacementLine);
@@ -226,7 +259,7 @@ function computeOverallStats(csvFileName) {
 
     let stats = {};
     stats.total = 0;
-    stats.complete = 0;
+    stats.finished = 0;
     stats.failed = 0;
     stats.solved = 0;
     stats.timedOut = 0;
@@ -234,7 +267,7 @@ function computeOverallStats(csvFileName) {
     for (let puzzle of csv.data) {
         stats.total++;
         if (flagToBoolean(puzzle.is_complete)) {
-            stats.complete++;
+            stats.finished++;
             if (flagToBoolean(puzzle.is_timeout)) {
                 stats.timedOut++;
             } else if (flagToBoolean(puzzle.is_correct)) {
@@ -290,8 +323,8 @@ function flagToBoolean(flag) {
     return flag == 0 ? false : true;
 }
 
-module.exports = { selectSet, update };
+module.exports = { select, start, update };
 
 //getFileContents("csv/blank.csv");
 //getFileContents("csv/blank2.csv");
-selectSet('/Users/kevinconnelly/Downloads/polgar-mate-in-one.pgn');
+console.log(JSON.stringify(select('/Users/kevinconnelly/Downloads/polgar-mate-in-one.pgn')));
