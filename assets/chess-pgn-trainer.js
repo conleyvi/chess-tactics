@@ -118,15 +118,17 @@ function checkAndPlayNext() {
 	if (game.history().length === moveHistory.length || (error && singleAttempt)) {
 		puzzlecomplete = true;
 
-		// TODO Perform update on server
-		let puzzle = puzzleset[PuzzleOrder[increment]];
+		// Perform update on server
+		let puzzle = puzzleset[PuzzleOrder[increment] - 1];
+
+		// Actual update can happen asynchronously
 
 		// Check to see if this is the last puzzle, with side effect
 		if (++increment === puzzleset.length) {
 			setcomplete = true;
 		} else {
 			// Are there more puzzles to go?  If yes, load the next one in the sequence
-			loadPuzzle(puzzleset[PuzzleOrder[increment]]);
+			loadPuzzle(puzzleset[PuzzleOrder[increment] - 1]);
 		}
 	}
 
@@ -361,8 +363,8 @@ function loadPGNFile() {
 				// File is now loaded
 				// Update the range of the puzzle counters to the size of the puzzleset
 				console.log('increment at time of update ' + increment);
-				$('#puzzleNumber_landscape').text(increment);
-				$('#puzzleNumber_portrait').text(increment);
+				$('#puzzleNumber_landscape').text(increment + 1);
+				$('#puzzleNumber_portrait').text(increment + 1);
 
 				$('#puzzleNumbertotal_landscape').text(puzzleset.length);
 				$('#puzzleNumbertotal_portrait').text(puzzleset.length);
@@ -536,16 +538,12 @@ async function parsePGN(PGNData, fileName) {
 			}
 		},
 	);
+	
 	// Basically just need to know if a set is currently open, and if so how many puzzles have been completed thus far
 
-	// Base URL for the API endpoint
 	const baseUrl = '/app/select';
-
-	// Query string parameters
 	const params = new URLSearchParams();
 	params.append('pgnFileName', fileName);
-
-	// Constructing the full URL with parameters
 	const url = `${baseUrl}?${params.toString()}`;
 
 	// Making the GET request using fetch
@@ -554,17 +552,13 @@ async function parsePGN(PGNData, fileName) {
 			if (!response.ok) {
 				throw new Error('Network response was not ok');
 			}
-			return response.json(); // Assuming response is JSON; use .text() or other methods as needed
+			return response.json();
 		})
 		.then(data => {
 			// Handle the data from the response
-			console.log(data.data);
-			console.log(data.data.finished);
 			increment = data.data.finished;
 
-			console.log(increment);
-			
-			// TODO If we are mid-set, change 'Start' to 'Continue'
+			// If we are mid-set, change 'Start' to 'Continue'
 			if(increment > 0) {
 				console.log('Changing Start to Continue...');
 				$('#btn_starttest_landscape').html('Continue');
@@ -576,9 +570,6 @@ async function parsePGN(PGNData, fileName) {
 			// Handle errors
 			console.error('Error fetching data:', error);
 		});
-
-		console.log("Finished api call");
-
 }
 
 /**
@@ -641,6 +632,7 @@ function resetGame() {
 	error = false;
 	setcomplete = false;
 	AnalysisLink = false;
+	increment = 0;
 
 	// Create the boards
 	board = new Chessboard('myBoard', config);
@@ -843,7 +835,7 @@ function snapEnd() {
 /**
  * Starts the test and timer
  */
-function startTest() {
+async function startTest() {
 	// Close hover
 	w3_close();
 
@@ -874,7 +866,6 @@ function startTest() {
 	// Get current date/time
 	startDateTime = new Date();
 	pauseDateTimeTotal = 0;
-	increment = 0;
 
 	// Neat bit here from https://www.freecodecamp.org/news/javascript-range-create-an-array-of-numbers-with-the-from-method/
 	const arrayRange = (start, stop, step) => Array.from(
@@ -887,13 +878,14 @@ function startTest() {
 		singleAttempt = true;
 	}
 
-	// TODO Set filename globally, use puzzle set
+	// Set filename globally, use puzzle set
 	const dataToSend = {
 		fileName: fileName,
+		randomize: $('#randomizeSet').is(':checked'),
 		games: games
 	};
 
-	fetch('/app/selectSet', {
+	await fetch('/app/selectSet', {
 		method: 'POST',
 		headers: {
 			'Content-Encoding': 'gzip',
@@ -909,24 +901,17 @@ function startTest() {
 			return response.json();
 		})
 		.then(data => {
-			const puzzlesetMeta = data;
+			const puzzlesetMeta = data.data;
 			console.log('Response from server:', puzzlesetMeta);
+			// 1-indexed array
+			PuzzleOrder = puzzlesetMeta.ordering;
 		})
 		.catch(error => {
 			console.error('Error posting data:', error);
 		});
 
-	// Shuffle the set if the box is checked
-	if ($('#randomizeSet').is(':checked')) {
-		// Generate numbers between 1 and the number of puzzles in the PGN and then shuffle them
-		PuzzleOrder = shuffle(arrayRange(0, puzzleset.length - 1, 1));
-	} else {
-		// Generate numbers between 1 and the number of puzzles in the PGN in order
-		PuzzleOrder = arrayRange(0, puzzleset.length - 1, 1);
-	}
-
 	// Now just need to send the desired puzzle to the board.
-	loadPuzzle(puzzleset[PuzzleOrder[increment]]);
+	loadPuzzle(puzzleset[PuzzleOrder[increment] - 1]);
 }
 
 /**
