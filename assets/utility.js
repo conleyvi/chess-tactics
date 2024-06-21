@@ -32,6 +32,8 @@ function startTimer(duration, callback) {
       }
   
 	}, 100); // Update timer every 100 milliseconds (0.1 seconds)
+
+    return interval;
   }
 
 function updateDisplay(minutes, seconds, tenths, elapsed, remaining)

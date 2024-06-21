@@ -40,6 +40,7 @@ let PuzzleOrder = [];
 let singleAttempt = false;
 let setnumber = 0;
 let timedout = false;
+let timer = null;
 
 // Promotion variables
 let promoteTo;
@@ -77,6 +78,7 @@ config = {
 	onDragStart: dragStart,
 	onDrop: dropPiece,
 	onSnapEnd: snapEnd,
+	pieceTheme: pieceTheme,
 	position: 'start',
 };
 
@@ -92,6 +94,7 @@ config = {
  * @returns {string}
  */
 function checkAndPlayNext() {
+
 	// Need to go this way since .moveNumber isn't working...
 	if (game.history()[game.history().length - 1] === moveHistory[game.history().length - 1]) { // correct move
 
@@ -121,6 +124,7 @@ function checkAndPlayNext() {
 
 	// Check if all the expected moves have been played
 	if (game.history().length === moveHistory.length || (error && singleAttempt) || timedout) {
+		clearInterval(timer);
 		puzzlecomplete = true;
 
 		// Perform update on server
@@ -154,7 +158,7 @@ function checkAndPlayNext() {
 			})
 			.then(data => {
 				const puzzlesetMeta = data.data;
-				console.log('Response from server:', puzzlesetMeta);
+				//console.log('Response from server:', puzzlesetMeta);
 				// 1-indexed array
 			})
 			.catch(error => {
@@ -187,6 +191,8 @@ function checkAndPlayNext() {
 		$('#moveturn').text('');
 
 	}
+
+	return 'snapback';
 }
 
 /**
@@ -285,7 +291,13 @@ function dropPiece(source, target) {
 	// is it a promotion?
 	const source_rank = source.substring(2, 1);
 	const target_rank = target.substring(2, 1);
-	const piece = game.get(source).type;
+	const g = game.get(source);
+
+	if(g === undefined || g == null) {
+		return 'snapback';
+	}
+
+	const piece = g.type;
 
 	// First attempt at move
 	// see if the move is legal
@@ -438,6 +450,9 @@ function loadPGNFile() {
  * @param {object} PGNPuzzle - The object representing a specific position and move sequence
  */
 function loadPuzzle(PGNPuzzle) {
+
+	board = new Chessboard('myBoard', config);
+
 	// Display current puzzle number in the sequence
 	$('#puzzleNumber_landscape').text(increment + 1);
 	$('#puzzleNumber_portrait').text(increment + 1);
@@ -508,9 +523,9 @@ function loadPuzzle(PGNPuzzle) {
 	indicateMove();
 
 	// Start the timer
-	startTimer(5, (minutes, seconds, tenths, elapsed, remaining) => {
+	timer = startTimer(5, (minutes, seconds, tenths, elapsed, remaining) => {
 		puzzleElapsed = elapsed;
-		console.log(`Puzzle elapsed time: ${puzzleElapsed}`);
+		//console.log(`Puzzle elapsed time: ${puzzleElapsed}`);
 		if(remaining <= 0) {
 			timedout = true;
 			checkAndPlayNext();
@@ -672,7 +687,6 @@ function resetGame() {
 
 	// Reset the current game in memory
 	board = null;
-	game = new Chess();
 	moveHistory = [];
 	fileName = null;
 	games = [];
@@ -686,10 +700,16 @@ function resetGame() {
 	setnumber = 0;
 	puzzleElapsed = 0;
 	timedout = false;
+	if(timer != null) {
+		clearInterval(timer);
+	}
+	timer = null;
 
 	// Create the boards
 	board = new Chessboard('myBoard', config);
-	blankBoard = new Chessboard('blankBoard', { showNotation: false });
+	blankBoard = new Chessboard('blankBoard', { pieceTheme: pieceTheme, showNotation: false });
+
+	game = new Chess();
 
 	// Resize the board to the current available space
 	$(window).trigger('resize');
