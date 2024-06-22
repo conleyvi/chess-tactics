@@ -38,7 +38,7 @@ app.post('/app/selectSet', (req, res) => {
         // Calculate the size of the request body in bytes
         const contentLength = parseInt(req.get('Content-Length'), 10);
         console.log(`Received ${contentLength} bytes of data`);
-        let result = start(puzzleData.fileName, puzzleData.games);
+        let result = start(puzzleData.fileName, puzzleData.games, puzzleData.randomize);
         res.json({ message: 'Puzzle finished successfully', data: result });
     }
     catch (error) {

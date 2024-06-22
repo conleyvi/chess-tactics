@@ -93,7 +93,7 @@ function select(pgnFileName) {
     return output;
 }
 
-function start(pgnFileName, games) {
+function start(pgnFileName, games, randomize) {
     console.log(`Starting set ${pgnFileName}`);
 
     // Check if we've already created a table for this PGN
@@ -127,7 +127,7 @@ function start(pgnFileName, games) {
             games = splitGames(PGNData);
         }
 
-        let gameCount = startSet(pgnFileName, games, csv, setNumber, true);
+        let gameCount = startSet(pgnFileName, games, csv, setNumber, randomize);
         console.log(`Started set ${setNumber} with ${gameCount} games`);
         let template = `\n{set},{total},0`;
         contents += template.replace('{set}', setNumber).replace('{total}', gameCount);
