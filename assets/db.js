@@ -131,7 +131,7 @@ function start(pgnFileName, games) {
         console.log(`Started set ${setNumber} with ${gameCount} games`);
         let template = `\n{set},{total},0`;
         contents += template.replace('{set}', setNumber).replace('{total}', gameCount);
-        FS.writeFileSync(csvFileName, contents);
+        FS.writeFileSync(csvFileName(pgnFileName), contents);
 
         csv = Papa.parse(contents, {
             header: true,
@@ -325,5 +325,5 @@ module.exports = { select, start, update };
 
 //getFileContents("csv/blank.csv");
 //getFileContents("csv/blank2.csv");
-console.log(JSON.stringify(select('/Users/kevinconnelly/Downloads/polgar-mate-in-one.pgn')));
-computeOverallStats(csvFileNamePerSet('/Users/kevinconnelly/Downloads/polgar-mate-in-one.pgn', 1));
+//console.log(JSON.stringify(select('/Users/kevinconnelly/Downloads/polgar-mate-in-one.pgn')));
+//computeOverallStats(csvFileNamePerSet('/Users/kevinconnelly/Downloads/polgar-mate-in-one.pgn', 1));
