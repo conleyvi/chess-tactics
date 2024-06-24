@@ -594,7 +594,7 @@ async function parsePGN(PGNData, fileName) {
 				puzzle.Number = index + 1;
 				puzzle.FileName = fileName;
 
-				console.log(JSON.stringify(puzzle));
+				//console.log(JSON.stringify(puzzle));
 
 				puzzleset.push(puzzle);
 			}
