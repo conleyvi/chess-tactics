@@ -269,20 +269,30 @@ function computeOverallStats(csvFileName) {
     stats.solved = 0;
     stats.timedOut = 0;
     stats.timeTaken = 0;
+    stats.timeTakenSolved = 0;
+    stats.timeTakenFailed = 0;
+    stats.timeTakenTimedOut = 0;
     for (let puzzle of csv.data) {
         ++stats.total;
         if (flagToBoolean(puzzle.is_complete)) {
             ++stats.finished;
             if (flagToBoolean(puzzle.is_timeout)) {
                 ++stats.timedOut;
+                stats.timeTakenTimedOut += puzzle.time_taken;
             } else if (flagToBoolean(puzzle.is_correct)) {
                 ++stats.solved;
+                stats.timeTakenSolved += puzzle.time_taken;
             } else {
                 ++stats.failed;
+                stats.timeTakenFailed += puzzle.time_taken;
             }
             stats.timeTaken += puzzle.time_taken;
         }
     }
+    stats.meanTimeTaken = stats.finished > 0 ? Math.floor(stats.timeTaken / stats.finished) : 0;
+    stats.meanTimeTakenTimedOut = stats.finished > 0 ? Math.floor(stats.timeTakenTimedOut / stats.timedOut) : 0;
+    stats.meanTimeTakenSolved = stats.solved > 0 ? Math.floor(stats.timeTakenSolved / stats.solved) : 0;
+    stats.meanTimeTakenFailed = stats.failed > 0 ? Math.floor(stats.timeTakenFailed / stats.failed) : 0;
     console.log(JSON.stringify(stats));
     return stats;
 }
@@ -326,4 +336,4 @@ module.exports = { select, start, update };
 //getFileContents("csv/blank.csv");
 //getFileContents("csv/blank2.csv");
 //console.log(JSON.stringify(select('/Users/kevinconnelly/Downloads/polgar-mate-in-one.pgn')));
-//computeOverallStats(csvFileNamePerSet('/Users/kevinconnelly/Downloads/polgar-mate-in-one.pgn', 1));
+computeOverallStats(csvFileNamePerSet('/Users/kevinconnelly/Downloads/polgar-mate-in-one.pgn', 2));
