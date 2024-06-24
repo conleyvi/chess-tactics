@@ -69,7 +69,7 @@ let messagelist = ['#messagecomplete', '#puzzlename_landscape', '#puzzlename_por
 // Assign details of the board
 // TODO: Figure out how to override the piece theme here instead of needing to modify the chessboardjs.css file.
 // Assign theme for the piece promotion popup window
-pieceTheme = './img/chesspieces/classic/{piece}.png';
+pieceTheme = './img/chesspieces/merida-gradient/{piece}.svg';
 promotionDialog = $('#promotion-dialog');
 
 // Initial Board Configuration

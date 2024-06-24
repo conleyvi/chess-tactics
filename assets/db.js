@@ -336,4 +336,4 @@ module.exports = { select, start, update };
 //getFileContents("csv/blank.csv");
 //getFileContents("csv/blank2.csv");
 //console.log(JSON.stringify(select('/Users/kevinconnelly/Downloads/polgar-mate-in-one.pgn')));
-computeOverallStats(csvFileNamePerSet('/Users/kevinconnelly/Downloads/polgar-mate-in-one.pgn', 2));
+computeOverallStats(csvFileNamePerSet('/Users/kevinconnelly/Downloads/polgar-mate-in-one.pgn', 3));
